@@ -35,27 +35,32 @@ export OPENAI_API_KEY='your_key_here'
 - 文本嵌入：`text-embedding-3-small`
 - 图像描述：`gpt-4o-mini`（Vision API）
 
+**功能说明**：
+- **智能分类**：基于文档内容（标题、摘要）自动分类，而不是简单使用第一个主题
+- **分类策略**：
+  1. 首先使用关键词匹配（快速准确）
+  2. 如果关键词匹配不明确，使用语义相似度（embedding）进行分类
+- **自动提取**：从 PDF 中自动提取标题和摘要用于分类
+- **文件移动**：分类后的文件会移动到 `{原文件夹}/organized/{主题}/` 目录
+
 ## 核心命令（CLI）
 
 ### 1. 添加/分类论文
 将单个 PDF 文件添加到索引并标记主题：
 ```bash
-python main.py add_paper /path/to/paper.pdf --topics "CV,NLP"
+python main.py add_paper samples/papers/1706.03762v7.pdf --topics "NLP"
 ```
 
 ### 2. 搜索论文
 使用自然语言查询搜索相关论文：
 ```bash
-python main.py search_paper "transformer encoder" --top_k 5
-python main.py search_paper "generative adversarial network" --top_k 3
+python main.py search_paper "attention mechanism" --top_k 5
 ```
 
 ### 3. 以文搜图
 通过文本描述搜索图像，结果会自动保存到 `search_results/{查询内容}/` 文件夹：
 ```bash
 python main.py search_image "sunset"
-python main.py search_image "chart graph diagram" --top_k 5
-python main.py search_image "landscape photo" --top_k 3
 ```
 
 **功能说明**：
@@ -67,76 +72,9 @@ python main.py search_image "landscape photo" --top_k 3
 自动处理文件夹中的 PDF 和图像文件，进行智能分类：
 ```bash
 python main.py organize_folder ./samples/papers --topics "CV,NLP"
-python main.py organize_folder ./samples --topics "CV"
 ```
 
-**功能说明**：
-- **智能分类**：基于文档内容（标题、摘要）自动分类，而不是简单使用第一个主题
-- **分类策略**：
-  1. 首先使用关键词匹配（快速准确）
-  2. 如果关键词匹配不明确，使用语义相似度（embedding）进行分类
-- **自动提取**：从 PDF 中自动提取标题和摘要用于分类
-- **文件移动**：分类后的文件会移动到 `{原文件夹}/organized/{主题}/` 目录
 
-### 5. 初始化 Git 仓库
-```bash
-python main.py init_git
-```
-
-## 快速参考（可直接运行的命令）
-
-### 批量整理论文（智能分类）
-```bash
-python main.py organize_folder ./samples/papers --topics "CV,NLP"
-```
-
-### 搜索论文
-```bash
-python main.py search_paper "transformer encoder" --top_k 5
-```
-
-### 搜索图像（结果自动保存）
-```bash
-python main.py search_image "sunset"
-```
-
-## 完整使用示例
-
-### 示例 1：批量整理论文并分类
-```bash
-# 整理 papers 文件夹，自动分类到 CV 或 NLP
-python main.py organize_folder ./samples/papers --topics "CV,NLP"
-
-# 预期输出：
-# - 自动提取每个 PDF 的标题和摘要
-# - 根据内容智能分类到 CV 或 NLP
-# - 文件移动到 ./samples/papers/organized/CV/ 或 ./samples/papers/organized/NLP/
-```
-
-### 示例 2：搜索论文
-```bash
-# 搜索与 transformer 相关的论文
-python main.py search_paper "transformer attention mechanism" --top_k 5
-
-# 预期输出：
-# Top results:
-# - path=... score=0.1234 topics=NLP snippet=...
-```
-
-### 示例 3：搜索图像并保存结果
-```bash
-# 搜索图表类图像
-python main.py search_image "chart graph" --top_k 3
-
-# 预期输出：
-# Found 3 images for query: 'chart graph'
-# Top results:
-# 1. path=samples/images/image1.png score=1.6723 inferred_topics=CV
-# 2. path=samples/images/image2.png score=1.5432 inferred_topics=CV
-# 3. path=samples/images/image3.png score=1.4321 inferred_topics=CV
-# 
-# ✓ Copied 3 images to: search_results/chart_graph
-```
 
 ## 技术栈
 
