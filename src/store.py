@@ -1,10 +1,10 @@
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 import chromadb
 from chromadb.utils import embedding_functions
 
-from src.embeddings import get_text_embedding, get_image_embedding
+from src.embeddings import get_text_embedding, get_image_embedding, get_text_embeddings_batch
 
 
 INDEX_PATH = os.path.join("data", "index")
@@ -24,7 +24,24 @@ def _doc_collection():
 
 def _img_collection():
     client = _client()
-    return client.get_or_create_collection(name=IMG_COLLECTION)
+    # 确保使用与文本embedding相同的维度（1536 for text-embedding-3-small）
+    # 如果collection已存在但维度不匹配，需要重新创建
+    try:
+        collection = client.get_collection(name=IMG_COLLECTION)
+        # 检查维度是否匹配（1536是text-embedding-3-small的维度）
+        # 如果collection为空或维度不匹配，删除并重新创建
+        count = collection.count()
+        if count > 0:
+            # 获取一个样本检查维度
+            sample = collection.get(limit=1)
+            if sample['embeddings'] and len(sample['embeddings'][0]) != 1536:
+                # 维度不匹配，删除旧collection
+                client.delete_collection(name=IMG_COLLECTION)
+                collection = client.create_collection(name=IMG_COLLECTION)
+        return collection
+    except Exception:
+        # Collection不存在，创建新的
+        return client.create_collection(name=IMG_COLLECTION)
 
 
 def add_document_chunks(chunks: List[Dict[str, Any]]) -> None:
@@ -32,20 +49,35 @@ def add_document_chunks(chunks: List[Dict[str, Any]]) -> None:
     if not chunks:
         return
     collection = _doc_collection()
-    ids = []
-    documents = []
-    metadatas = []
-    embeddings = []
+    
+    # Prepare data
+    valid_chunks = []
+    texts = []
     for idx, chunk in enumerate(chunks):
         text = chunk.get("text", "").strip()
         if not text:
             continue
-        emb = get_text_embedding(text)
-        if not emb:
+        valid_chunks.append((idx, chunk))
+        texts.append(text)
+    
+    if not texts:
+        return
+    
+    # Get embeddings in batch (more efficient and reduces API calls)
+    embeddings_batch = get_text_embeddings_batch(texts)
+    
+    # Process results
+    ids = []
+    documents = []
+    metadatas = []
+    embeddings = []
+    
+    for (idx, chunk), emb in zip(valid_chunks, embeddings_batch):
+        if not emb:  # Skip failed embeddings
             continue
         doc_id = chunk.get("chunk_id") or f"{chunk.get('path','unknown')}:{idx}"
         ids.append(doc_id)
-        documents.append(text)
+        documents.append(chunk.get("text", "").strip())
         metadatas.append(
             {
                 "path": chunk.get("path", ""),
@@ -53,8 +85,10 @@ def add_document_chunks(chunks: List[Dict[str, Any]]) -> None:
             }
         )
         embeddings.append(emb)
+    
     if not ids:
         return
+    
     collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
 
 
@@ -79,7 +113,7 @@ def query_documents(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
     return results
 
 
-def add_image(path: str, image_bytes: bytes, topics: List[str] | None = None) -> None:
+def add_image(path: str, image_bytes: bytes, topics: Optional[List[str]] = None) -> None:
     if not image_bytes:
         return
     collection = _img_collection()
