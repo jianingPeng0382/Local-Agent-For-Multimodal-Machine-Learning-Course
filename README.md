@@ -13,8 +13,8 @@
 
 ### 1. 创建并激活虚拟环境
 ```bash
-conda create -n local-agent
-conda activate local-agent
+python3 -m venv venv
+source venv/bin/activate
 ```
 
 ### 2. 安装依赖
