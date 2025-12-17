@@ -54,11 +54,35 @@ def cmd_search_paper(args):
         )
 
 
+def cmd_add_image(args):
+    img_path = Path(args.path)
+    if not img_path.exists():
+        raise FileNotFoundError(f"{img_path} not found")
+    if not is_image_file(str(img_path)):
+        raise ValueError(f"{img_path} is not a valid image file")
+    topics = parse_topics(args.topics)
+    img_bytes = load_image_bytes(str(img_path))
+    store.add_image(str(img_path), img_bytes, topics=topics)
+    print(f"Ingested image {img_path} with topics: {topics}")
+
+
 def cmd_search_image(args):
+    # 检查图像集合是否为空
+    total_count = store.get_image_count()
+    
+    if total_count == 0:
+        print("No images found in the database.")
+        print("\n提示：您需要先添加图像到索引中。可以使用以下命令：")
+        print("  1. 添加单个图像：python main.py add_image <路径> --topics <主题>")
+        print("  2. 批量添加：python main.py organize_folder <目录> --topics <主题>")
+        print(f"\n例如：python main.py organize_folder ./samples/images --topics CV")
+        return
+    
     results = store.query_images(args.query, top_k=args.top_k)
     
     if not results:
-        print("No images found.")
+        print(f"No images found for query: '{args.query}'")
+        print(f"(数据库中共有 {total_count} 张图像)")
         return
     
     print(f"Found {len(results)} images for query: '{args.query}'")
@@ -367,6 +391,11 @@ def build_parser():
     add_paper.add_argument("path", help="Path to PDF")
     add_paper.add_argument("--topics", default="", help="Comma-separated topics")
     add_paper.set_defaults(func=cmd_add_paper)
+
+    add_image = sub.add_parser("add_image", help="Ingest and tag an image")
+    add_image.add_argument("path", help="Path to image")
+    add_image.add_argument("--topics", default="", help="Comma-separated topics")
+    add_image.set_defaults(func=cmd_add_image)
 
     search_paper = sub.add_parser("search_paper", help="Semantic search PDFs")
     search_paper.add_argument("query")

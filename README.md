@@ -13,7 +13,8 @@
 
 ### 1. 创建并激活虚拟环境
 ```bash
-python -m venv .venv && source .venv/bin/activate
+conda create -n local-agent
+conda activate local-agent
 ```
 
 ### 2. 安装依赖
@@ -48,19 +49,26 @@ export OPENAI_API_KEY='your_key_here'
 ### 1. 添加/分类论文
 将单个 PDF 文件添加到索引并标记主题：
 ```bash
-python main.py add_paper samples/papers/1706.03762v7.pdf --topics "NLP"
+python3 main.py add_paper samples/papers/1706.03762v7.pdf --topics "NLP"
 ```
 
 ### 2. 搜索论文
 使用自然语言查询搜索相关论文：
 ```bash
-python main.py search_paper "attention mechanism" --top_k 5
+python3 main.py search_paper "attention mechanism" --top_k 5
 ```
 
-### 3. 以文搜图
-通过文本描述搜索图像，结果会自动保存到 `search_results/{查询内容}/` 文件夹：
+### 3. 批量整理文件夹
+自动处理文件夹中的 PDF 和图像文件，进行智能分类：
 ```bash
-python main.py search_image "sunset"
+python3 main.py organize_folder ./samples/papers --topics "CV,NLP"
+```
+
+### 4. 以文搜图
+添加图像到索引,然后通过文本描述搜索图像，结果会自动保存到 `search_results/{查询内容}/` 文件夹：
+```bash
+python3 main.py organize_folder ./samples/images
+python3 main.py search_image "NLP"
 ```
 
 **功能说明**：
@@ -68,11 +76,7 @@ python main.py search_image "sunset"
 - 匹配的图像会自动复制到 `search_results/{查询内容}/` 文件夹
 - 文件名添加序号前缀（01_, 02_, ...）便于排序
 
-### 4. 批量整理文件夹
-自动处理文件夹中的 PDF 和图像文件，进行智能分类：
-```bash
-python main.py organize_folder ./samples/papers --topics "CV,NLP"
-```
+
 
 
 
@@ -104,19 +108,19 @@ python main.py organize_folder ./samples/papers --topics "CV,NLP"
 将截图放入 `docs/screenshots/` 目录，并在下方路径替换为真实文件名。
 
 1. **论文搜索结果示例**  
-   - 命令：`python main.py search_paper "transformer encoder"`  
+   - 命令：`python3 main.py search_paper "transformer encoder"`  
    - 截图：`docs/screenshots/search_paper.png`
 
 2. **以文搜图结果示例**  
-   - 命令：`python main.py search_image "sunset on the beach"`  
+   - 命令：`python3 main.py search_image "sunset on the beach"`  
    - 截图：`docs/screenshots/search_image.png`
 
 3. **批量整理后文件夹结构**  
-   - 命令：`python main.py organize_folder ./samples/papers --topics "CV,NLP"`  
+   - 命令：`python3 main.py organize_folder ./samples/papers --topics "CV,NLP"`  
    - 截图：`docs/screenshots/organized_folder.png`
 
 4. **搜索结果文件夹**  
-   - 命令：`python main.py search_image "chart graph"`  
+   - 命令：`python3 main.py search_image "chart graph"`  
    - 截图：`docs/screenshots/search_results_folder.png`
 
 > 如果需要更完整的报告，请将上述截图嵌入到 PDF 或直接在本 README 中引用，并附上命令输出文本（可通过终端复制粘贴）。
@@ -126,12 +130,12 @@ python main.py organize_folder ./samples/papers --topics "CV,NLP"
 1. **准备数据**：准备若干 PDF 与图片至 `./samples/papers` 和 `./samples/images`
 2. **批量整理**：
    ```bash
-   python main.py organize_folder ./samples/papers --topics "CV,NLP"
+   python3 main.py organize_folder ./samples/papers --topics "CV,NLP"
    ```
 3. **执行搜索**：
    ```bash
-   python main.py search_paper "transformer"
-   python main.py search_image "chart graph"
+   python3 main.py search_paper "transformer"
+   python3 main.py search_image "chart graph"
    ```
 4. **查看结果**：
    - 论文搜索结果在终端输出
@@ -180,6 +184,6 @@ python main.py organize_folder ./samples/papers --topics "CV,NLP"
 ├── data/
 │   └── index/           # ChromaDB 持久化目录
 ├── search_results/      # 图像搜索结果保存目录
-├── requirements.txt     # Python 依赖
+├── requirements.txt     # python3 依赖
 └── README.md           # 本文档
 ```

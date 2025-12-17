@@ -123,7 +123,7 @@ def get_image_embedding(image_bytes: bytes, retry_count: int = 0) -> List[float]
                     "content": [
                         {
                             "type": "text",
-                            "text": "Describe this image in detail, including all visible objects, text, colors, layout, and any other relevant information. Provide a comprehensive description that would be useful for semantic search."
+                            "text": "Describe this image in detail, including all visible objects, text, colors, layout, and any other relevant information. If this appears to be from an academic paper, research, or scientific content, please identify the research field (e.g., NLP, computer vision, machine learning), any visible text, charts, graphs, tables, experimental results, or technical diagrams. If it contains text, transcribe key words and phrases. Provide a comprehensive description that would be useful for semantic search, especially for academic and research-related queries."
                         },
                         {
                             "type": "image_url",

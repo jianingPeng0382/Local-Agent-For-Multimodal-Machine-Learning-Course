@@ -128,11 +128,40 @@ def add_image(path: str, image_bytes: bytes, topics: Optional[List[str]] = None)
     )
 
 
+def get_image_count() -> int:
+    """返回图像集合中的图像数量"""
+    collection = _img_collection()
+    return collection.count()
+
+
+def _expand_query_for_search(query: str) -> str:
+    """扩展查询文本，使其包含更多相关关键词，提高搜索准确性"""
+    query_lower = query.lower().strip()
+    
+    # 定义主题扩展映射
+    expansions = {
+        "nlp": "natural language processing text analysis language models linguistics transformers attention mechanism sequence models",
+        "cv": "computer vision image recognition object detection visual processing convolutional neural networks vision models",
+        "ml": "machine learning neural networks deep learning algorithms",
+        "ai": "artificial intelligence machine learning neural networks",
+    }
+    
+    # 检查查询是否匹配某个主题
+    for key, expansion in expansions.items():
+        if key in query_lower or query_lower in key:
+            return f"{query} {expansion}"
+    
+    # 如果没有匹配，返回原查询
+    return query
+
+
 def query_images(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
     if not query.strip():
         return []
     collection = _img_collection()
-    emb = get_text_embedding(query)
+    # 扩展查询以提高搜索准确性
+    expanded_query = _expand_query_for_search(query)
+    emb = get_text_embedding(expanded_query)
     if not emb:
         return []
     res = collection.query(query_embeddings=[emb], n_results=top_k)
